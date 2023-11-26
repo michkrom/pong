@@ -50,13 +50,13 @@ impl<'w> Pong<'w> {
         self.paddle1.y = 0.0;
         self.paddle1.dx = 1.0;
         self.paddle1.dy = 9.0;
-        self.paddle1.c = '|';
-        self.paddle2.x = self.mx-1.0;
+        self.paddle1.s = String::from("\u{2588}");
+        self.paddle2.x = self.mx - 1.0;
         self.paddle2.y = 0.0;
         self.paddle2.dx = 1.0;
         self.paddle2.dy = 9.0;
-        self.paddle2.c = '|';
-        self.ball.c = 'O';
+        self.paddle2.s = String::from("\u{2588}");
+        self.ball.s = String::from("\u{25cf}");
         self.ball.dx = 1.0;
         self.ball.dy = 1.0;
         self.window.clear();
@@ -133,6 +133,8 @@ impl<'w> Pong<'w> {
             self.serve_reset(false);
         }
         self.window.mvaddstr(0, (self.mx/2.0) as i32, format!("{:02} {:02} {:02}", self.score1, self.hits, self.score2));
+        self.window.mvaddstr(self.my as i32 - 1,self.mx as i32 - 1,"Y");
+        self.window.mvaddstr(self.my as i32,self.mx as i32,"X");
     }
 
     pub fn on_key(&mut self, key: char) {

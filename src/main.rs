@@ -1,3 +1,8 @@
+// A simple ncurses game of PONG - a study in Rust by a venerable C++ coder.
+//
+// loosly based on https://www.pong-story.com/LAWN_TENNIS.pdf
+//
+
 extern crate pancurses;
 use pancurses::{curs_set, endwin, initscr, noecho, Input};
 
