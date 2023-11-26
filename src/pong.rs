@@ -4,7 +4,7 @@ use pancurses::Window;
 use crate::rect::Rect;
 
 pub struct Pong<'w> {
-    w: &'w Window,
+    window: &'w Window,
     my: f64,
     mx: f64,
     score1: i32,
@@ -23,7 +23,7 @@ pub struct Pong<'w> {
 impl<'w> Pong<'w> {
     pub fn new(window: &Window) -> Pong {
         let mut pong = Pong {
-            w: window,
+            window: window,
             my: 0.0,
             mx: 0.0,
             score1: 0,
@@ -44,11 +44,15 @@ impl<'w> Pong<'w> {
     }
 
     pub fn resize(&mut self) {
-        self.my = self.w.get_max_y() as f64;
-        self.mx = self.w.get_max_x() as f64;
+        self.my = self.window.get_max_y() as f64;
+        self.mx = self.window.get_max_x() as f64;
+        self.paddle1.x = 0.0;
+        self.paddle1.y = 0.0;
         self.paddle1.dx = 1.0;
         self.paddle1.dy = 9.0;
         self.paddle1.c = '|';
+        self.paddle1.x = self.mx-1.0;
+        self.paddle1.y = 0.0;
         self.paddle2.dx = 1.0;
         self.paddle2.dy = 9.0;
         self.paddle2.c = '|';
@@ -87,11 +91,11 @@ impl<'w> Pong<'w> {
 
     pub fn serve_reset(&mut self, player1: bool) {
         self.paddle1
-            .moveto(self.w, 0.0, self.my / 2.0 - self.paddle1.dy / 2.0);
+            .moveto(self.window, 0.0, self.my / 2.0 - self.paddle1.dy / 2.0);
         self.paddle2
-            .moveto(self.w, self.mx - 1.0, self.my / 2.0 - self.paddle2.dy / 2.0);
+            .moveto(self.window, self.mx - 1.0, self.my / 2.0 - self.paddle2.dy / 2.0);
         self.ball.moveto(
-            &self.w,
+            &self.window,
             if player1 { 1.0 } else { self.mx - 2.0 },
             self.my / 2.0,
         );
@@ -103,12 +107,12 @@ impl<'w> Pong<'w> {
     }
 
     pub fn update(&mut self) {
-        self.paddle1.redraw(self.w);
-        self.paddle2.redraw(self.w);
+        self.paddle1.redraw(self.window);
+        self.paddle2.redraw(self.window);
         if self.serve_countdown > 0 {
             self.serve_countdown -= 1;
         } else {
-            (self.dx, self.dy) = self.ball.moveby(self.w, self.dx, self.dy);
+            (self.dx, self.dy) = self.ball.moveby(self.window, self.dx, self.dy);
         }
         if self.ball.overlap(&self.paddle1) {
             self.hits += 1;
@@ -125,25 +129,25 @@ impl<'w> Pong<'w> {
             self.score1 += 1;
             self.serve_reset(false);
         }
-        self.w.mvaddstr(0, (self.mx/2.0) as i32, format!("{} {} {}", self.score1, self.hits, self.score2));
+        self.window.mvaddstr(0, (self.mx/2.0) as i32, format!("{} {} {}", self.score1, self.hits, self.score2));
     }
 
     pub fn on_key(&mut self, key: char) {
         match key {
             'z' => {
-                self.paddle1.moveby(self.w, 0.0, self.paddle1dy);
+                self.paddle1.moveby(self.window, 0.0, self.paddle1dy);
                 self.paddle1dy += 0.25;
             }
             'a' => {
-                self.paddle1.moveby(self.w, 0.0, -self.paddle1dy);
+                self.paddle1.moveby(self.window, 0.0, -self.paddle1dy);
                 self.paddle1dy += 0.25;
             }
             'm' => {
-                self.paddle2.moveby(self.w, 0.0, self.paddle2dy);
+                self.paddle2.moveby(self.window, 0.0, self.paddle2dy);
                 self.paddle2dy += 0.25;
             }
             'k' => {
-                self.paddle2.moveby(self.w, 0.0, -self.paddle2dy);
+                self.paddle2.moveby(self.window, 0.0, -self.paddle2dy);
                 self.paddle2dy += 0.25;
             }
             _ => {}

@@ -20,10 +20,13 @@ fn main() {
                 game.on_key(c);
             }
             Some(Input::KeyDC) => break,
-            Some(input) => {
-                window.addstr(&format!("{:?}", input));
+            Some(Input::KeyResize) => {
+                game.resize();
             }
-            None => game.on_none_input()
+            Some(input) => {
+                window.mvaddstr(0, 0, &format!("{:?}", input));
+            }
+            None => game.on_none_input(),
         }
     }
     endwin();
