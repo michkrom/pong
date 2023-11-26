@@ -13,13 +13,13 @@ fn main() {
     noecho();
     curs_set(0);
     window.timeout(10);
-    let mut game : pong::Pong = Default::default();
-    game.resize(&window);
-    game.serve_reset(&window, true);
+    let mut game = pong::Pong::new(&window);
+    game.resize();
+    game.serve_reset(true);
     loop {
-        game.update(&window);
+        game.update();
         match window.getch() {
-            Some(Input::Character(c)) => { game.on_key(&window, c); },
+            Some(Input::Character(c)) => { game.on_key( c); },
             Some(Input::KeyDC) => break,
             Some(input) => {
                 window.addstr(&format!("{:?}", input));
