@@ -1,5 +1,5 @@
 extern crate pancurses;
-use pancurses::{Window};
+use pancurses::Window;
 
 #[derive(Default)]
 pub struct Rect {
@@ -7,7 +7,7 @@ pub struct Rect {
     pub y: f64,
     pub dx: f64,
     pub dy: f64,
-    pub c: char,
+    pub c: char
 }
 
 fn draw_rect(window: &Window, x: i32, y: i32, dx: i32, dy: i32, c: char) {

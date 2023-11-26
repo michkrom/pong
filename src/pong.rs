@@ -16,12 +16,31 @@ pub struct Pong<'w> {
     paddle1: Rect,
     paddle2: Rect,
     paddle1dy: f64,
-    paddle2dy: f64
+    paddle2dy: f64,
+    serve_countdown: i32,
 }
 
 impl<'w> Pong<'w> {
-    pub fn new(window : &Window) -> Pong {
-        Pong{w: window, my: 0.0, mx: 0.0, score1: 0, score2: 0, hits: 0, ball: Default::default(), dx: 0.0, dy: 0.0, paddle1: Default::default(), paddle2: Default::default(),  paddle1dy: 0.0, paddle2dy: 0.0 /*  */}
+    pub fn new(window: &Window) -> Pong {
+        let mut pong = Pong {
+            w: window,
+            my: 0.0,
+            mx: 0.0,
+            score1: 0,
+            score2: 0,
+            hits: 0,
+            ball: Default::default(),
+            dx: 0.0,
+            dy: 0.0,
+            paddle1: Default::default(),
+            paddle2: Default::default(),
+            paddle1dy: 0.0,
+            paddle2dy: 0.0,
+            serve_countdown: 0,
+        };
+        pong.resize();
+        pong.serve_reset(true);
+        pong
     }
 
     pub fn resize(&mut self) {
@@ -46,29 +65,32 @@ impl<'w> Pong<'w> {
         } else {
             2.1
         };
-        v * self.mx / (self.mx + self.my)
+        v * self.mx / (self.mx + self.my) / 2.0
     }
 
     pub fn serve_reset(&mut self, player1: bool) {
         self.paddle1
             .moveto(self.w, 0.0, self.my / 2.0 - self.paddle1.dy / 2.0);
-        self.paddle2.moveto(
-            self.w,
-            self.mx - 1.0,
-            self.my / 2.0 - self.paddle2.dy / 2.0,
-        );
+        self.paddle2
+            .moveto(self.w, self.mx - 1.0, self.my / 2.0 - self.paddle2.dy / 2.0);
         self.ball.moveto(
             &self.w,
-            if player1 { 1.0 } else { self.mx - 1.0 },
+            if player1 { 1.0 } else { self.mx - 2.0 },
             self.my / 2.0,
         );
         self.hits = 0;
         self.dy = self.my / (self.mx + self.my);
-        self.dx = self.ball_dx()
+        self.dx = self.ball_dx();
+        if player1 { self.dx *= -1.0; }
+        self.serve_countdown = 100;
     }
 
     pub fn update(&mut self) {
-        (self.dx, self.dy) = self.ball.moveby(self.w, self.dx, self.dy);
+        if self.serve_countdown > 0 {
+            self.serve_countdown -= 1;
+        } else {
+            (self.dx, self.dy) = self.ball.moveby(self.w, self.dx, self.dy);
+        }
         self.paddle1.redraw(self.w);
         self.paddle2.redraw(self.w);
         if self.ball.overlap(&self.paddle1) {
