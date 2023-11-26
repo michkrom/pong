@@ -51,14 +51,17 @@ impl<'w> Pong<'w> {
         self.paddle1.dx = 1.0;
         self.paddle1.dy = 9.0;
         self.paddle1.c = '|';
-        self.paddle1.x = self.mx-1.0;
-        self.paddle1.y = 0.0;
+        self.paddle2.x = self.mx-1.0;
+        self.paddle2.y = 0.0;
         self.paddle2.dx = 1.0;
         self.paddle2.dy = 9.0;
         self.paddle2.c = '|';
         self.ball.c = 'O';
         self.ball.dx = 1.0;
         self.ball.dy = 1.0;
+        self.window.clear();
+        self.serve_reset(true);
+        self.update();
     }
 
     fn ball_dx(&self) -> f64 {
@@ -129,7 +132,7 @@ impl<'w> Pong<'w> {
             self.score1 += 1;
             self.serve_reset(false);
         }
-        self.window.mvaddstr(0, (self.mx/2.0) as i32, format!("{} {} {}", self.score1, self.hits, self.score2));
+        self.window.mvaddstr(0, (self.mx/2.0) as i32, format!("{:02} {:02} {:02}", self.score1, self.hits, self.score2));
     }
 
     pub fn on_key(&mut self, key: char) {
