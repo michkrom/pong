@@ -10,6 +10,7 @@ fn draw_rect(window: &Window, x: i32, y: i32, dx: i32, dy: i32, c: char) {
     }
 }
 
+#[derive(Default)]
 struct Rect {
     x: f64,
     y: f64,
@@ -84,6 +85,100 @@ impl Rect {
     }
 }
 
+#[derive(Default)]
+struct Pong {
+  my: f64, 
+  mx: f64,  
+  score1: i32, 
+  score2: i32,
+  hits: i32,
+  ball: Rect,
+  dx: f64,
+  dy: f64,
+  paddle1: Rect,
+  paddle2: Rect,
+  paddle1dy: f64,
+  paddle2dy: f64
+}
+
+impl Pong {
+  fn resize(&mut self, window: &Window) {
+    self.my = window.get_max_y() as f64;
+    self.mx = window.get_max_x() as f64;
+    self.paddle1.dx = 1.0;
+    self.paddle1.dy = 7.0;
+    self.paddle1.c = '|';
+    self.paddle2.dx = 1.0;
+    self.paddle2.dy = 7.0;
+    self.paddle2.c = '|';
+    self.ball.c = 'O';
+    self.ball.dx = 1.0;
+    self.ball.dy = 1.0;
+  }
+
+  fn ball_dx(&self) -> f64 {
+    let v = 
+    if self.hits < 4 {
+      1.0
+    } else if self.hits < 12 {
+      1.6
+    } else {
+      2.1
+    };
+    v * self.mx / (self.mx + self.my)
+  }
+
+  fn serve_reset(&mut self, window: &Window, player1: bool) {
+    self.paddle1.moveto(&window, 0.0, self.my / 2.0 - self.paddle1.dy / 2.0);
+    self.paddle2.moveto(&window, self.mx - 1.0, self.my / 2.0 - self.paddle2.dy / 2.0);
+    self.ball.moveto(&window, if player1 { 1.0 } else { self.mx - 1.0 }, self.my / 2.0);
+    self.hits = 0;
+    self.dy = self.my / (self.mx + self.my);
+    self.dx = self.ball_dx()
+  }
+  
+  fn update(&mut self, window: &Window) {
+    (self.dx, self.dy) = self.ball.moveby(window, self.dx, self.dy);
+    self.paddle1.redraw(window);
+    self.paddle2.redraw(window);
+    if self.ball.overlap(&self.paddle1) {
+      self.hits += 1;
+      self.dx = self.ball_dx();
+    } else if self.ball.overlap(&self.paddle2) {
+        self.hits += 1;
+        self.dx = -self.ball_dx();
+    } else if self.ball.x <= 0.0 {
+        self.score2 += 1;
+        self.serve_reset(window, true);
+    } else if self.ball.x + self.ball.dx >= self.mx {
+        self.score1 += 1;
+        self.serve_reset(window, false);
+      }
+  }
+
+  fn on_key(&mut self, window: &Window, key: char) {
+    match key {
+      'z' => {
+          self.paddle1.moveby(window, 0.0, self.paddle1dy);
+          self.paddle1dy += 0.25;
+      }
+      'a' => {
+        self.paddle1.moveby(window, 0.0, -self.paddle1dy);
+        self.paddle1dy += 0.25;
+      }
+      'm' => {
+        self.paddle2.moveby(window, 0.0, self.paddle2dy);
+        self.paddle2dy += 0.25;
+      }
+      'k' => {
+        self.paddle2.moveby(window, 0.0, -self.paddle2dy);
+        self.paddle2dy += 0.25;
+      }
+      _ => {}
+  }
+}
+}
+
 fn main() {
     let window = initscr();
     window.keypad(true);
@@ -91,106 +186,22 @@ fn main() {
     //raw();
     noecho();
     curs_set(0);
-    let mut ball = Rect {
-        x: 0.0,
-        y: 0.0,
-        dx: 1.0,
-        dy: 1.0,
-        c: 'O',
-    };
-    let (my, mx) = (window.get_max_y() as f64, window.get_max_x() as f64);
-    let (mut score1, mut score2) = (0, 0);
-    let mut hits = 0;
-    let mut dx = mx / (mx + my);
-    let mut dy = my / (mx + my);
-    let mut paddle1 = Rect {
-        x: 0.0,
-        y: my/2.0-3.0,
-        dx: 1.0,
-        dy: 7.0,
-        c: '|',
-    };
-    let mut paddle2 = Rect {
-        x: mx - 1.0,
-        y: my/2.0-3.0,
-        dx: 1.0,
-        dy: 8.0,
-        c: '|',
-    };
-
     window.timeout(10);
-
-    let (mut paddle1dy, mut paddle2dy) = (1.0, 1.0);
-
+    let mut pong : Pong = Default::default();
+    pong.resize(&window);
+    pong.serve_reset(&window, true);
     loop {
-        (dx, dy) = ball.moveby(&window, dx, dy);
-        paddle1.redraw(&window);
-        paddle2.redraw(&window);
-
+        pong.update(&window);
         match window.getch() {
-            Some(Input::Character(c)) => match c {
-                'z' => {
-                    paddle1.moveby(&window, 0.0, paddle1dy);
-                    paddle1dy += 0.25;
-                }
-                'a' => {
-                    paddle1.moveby(&window, 0.0, -paddle1dy);
-                    paddle1dy += 0.25;
-                }
-                'm' => {
-                    paddle2.moveby(&window, 0.0, paddle2dy);
-                    paddle2dy += 0.25;
-                }
-                'k' => {
-                    paddle2.moveby(&window, 0.0, -paddle2dy);
-                    paddle2dy += 0.25;
-                }
-                _ => {}
-            },
+            Some(Input::Character(c)) => { pong.on_key(&window, c); },
             Some(Input::KeyDC) => break,
             Some(input) => {
                 window.addstr(&format!("{:?}", input));
             }
             None => {
-                paddle1dy = 1.0;
-                paddle2dy = 1.0;
+              pong.paddle1dy = 1.0;
+              pong.paddle2dy = 1.0;
             }
-        }
-        if ball.overlap(&paddle1) {
-            hits += 1;
-            if (hits < 4) {
-                dx = 1.0;
-            } else if (hits < 12) {
-                dx = 1.6;
-            } else {
-                dx = 2.1;
-            }
-            dx = 2.1;
-            dx *= mx / (mx + my);
-        } else if ball.overlap(&paddle2) {
-            hits += 1;
-            if (hits < 4) {
-                dx = 1.0;
-            } else if (hits < 12) {
-                dx = 1.6;
-            } else {
-                dx = 2.1;
-            }
-            dx *= -mx / (mx + my);
-        } else if ball.x <= 0.0 {
-            score2 += 1;
-            paddle1.moveto(&window, 0.0, my / 2.0 - paddle1.dy / 2.0);
-            paddle2.moveto(&window, mx - 1.0, my / 2.0 - paddle2.dy / 2.0);
-            ball.moveto(&window, 1.0, my / 2.0);
-            hits = 0;
-            dx = mx / (mx + my);            
-        } else if ball.x + ball.dx >= mx {
-            score1 += 1;
-            paddle1.moveto(&window, 0.0, my / 2.0 - paddle1.dy / 2.0);
-            paddle2.moveto(&window, mx - 1.0, my / 2.0 - paddle2.dy / 2.0);
-            ball.moveto(&window, mx - 2.0, my / 2.0);
-            hits = 0;
-            dx = -mx / (mx + my);            
         }
     }
     endwin();
