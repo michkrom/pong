@@ -23,7 +23,7 @@ fn main() {
             Some(input) => {
                 window.addstr(&format!("{:?}", input));
             }
-            None => game.on_none_input(),
+            None => game.on_none_input()
         }
     }
     endwin();

@@ -47,10 +47,10 @@ impl<'w> Pong<'w> {
         self.my = self.w.get_max_y() as f64;
         self.mx = self.w.get_max_x() as f64;
         self.paddle1.dx = 1.0;
-        self.paddle1.dy = 7.0;
+        self.paddle1.dy = 9.0;
         self.paddle1.c = '|';
         self.paddle2.dx = 1.0;
-        self.paddle2.dy = 7.0;
+        self.paddle2.dy = 9.0;
         self.paddle2.c = '|';
         self.ball.c = 'O';
         self.ball.dx = 1.0;
@@ -68,6 +68,23 @@ impl<'w> Pong<'w> {
         v * self.mx / (self.mx + self.my) / 2.0
     }
 
+    fn ball_dy(&self, n: i32) -> f64 {
+        let v =
+        match n {
+            -4 => 2.0,
+            -3 => 1.4,
+            -2 => 1.0,
+            -1 => 0.7,
+            0 => 0.0,
+            1 => -0.7,
+            2 => -1.0,
+            3 => -1.4,
+            4 => -2.0,
+            _ => 0.0
+        };
+        v * self.my / (self.mx + self.my) / 2.0
+    }
+
     pub fn serve_reset(&mut self, player1: bool) {
         self.paddle1
             .moveto(self.w, 0.0, self.my / 2.0 - self.paddle1.dy / 2.0);
@@ -79,26 +96,28 @@ impl<'w> Pong<'w> {
             self.my / 2.0,
         );
         self.hits = 0;
-        self.dy = self.my / (self.mx + self.my);
+        self.dy = self.ball_dy(0);
         self.dx = self.ball_dx();
         if player1 { self.dx *= -1.0; }
         self.serve_countdown = 100;
     }
 
     pub fn update(&mut self) {
+        self.paddle1.redraw(self.w);
+        self.paddle2.redraw(self.w);
         if self.serve_countdown > 0 {
             self.serve_countdown -= 1;
         } else {
             (self.dx, self.dy) = self.ball.moveby(self.w, self.dx, self.dy);
         }
-        self.paddle1.redraw(self.w);
-        self.paddle2.redraw(self.w);
         if self.ball.overlap(&self.paddle1) {
             self.hits += 1;
             self.dx = self.ball_dx();
+            self.dy = self.ball_dy((self.paddle1.y+self.paddle1.dy/2.0-self.ball.y) as i32);
         } else if self.ball.overlap(&self.paddle2) {
             self.hits += 1;
             self.dx = -self.ball_dx();
+            self.dy = self.ball_dy((self.paddle2.y+self.paddle1.dy/2.0-self.ball.y) as i32);
         } else if self.ball.x <= 0.0 {
             self.score2 += 1;
             self.serve_reset(true);
@@ -106,6 +125,7 @@ impl<'w> Pong<'w> {
             self.score1 += 1;
             self.serve_reset(false);
         }
+        self.w.mvaddstr(0, (self.mx/2.0) as i32, format!("{} {} {}", self.score1, self.hits, self.score2));
     }
 
     pub fn on_key(&mut self, key: char) {

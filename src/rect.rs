@@ -26,7 +26,7 @@ impl Rect {
             self.y as i32,
             self.dx as i32,
             self.dy as i32,
-            c,
+            c
         );
     }
     pub fn redraw(&self, window: &Window) {
@@ -36,7 +36,7 @@ impl Rect {
             self.y as i32,
             self.dx as i32,
             self.dy as i32,
-            self.c,
+            self.c
         );
     }
 
